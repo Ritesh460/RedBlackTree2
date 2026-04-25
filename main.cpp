@@ -139,8 +139,9 @@ void RBTree::fixInsert(Node* node) {
       }
       else {
         if (node == parent->right) {
-          node = parent;
-          rotateLeft(node);
+          rotateLeft(parent);
+	  node = parent;
+          parent = node->parent;
         }
         parent->color = BLACK;
         grandparent->color = RED;
@@ -158,8 +159,9 @@ void RBTree::fixInsert(Node* node) {
       }
       else {
         if (node == parent->left) {
-          node = parent;
-          rotateRight(node);
+          rotateRight(parent);
+	  node = parent;
+	  parent = node->parent;
         }
         parent->color = BLACK;
         grandparent->color = RED;
