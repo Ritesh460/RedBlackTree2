@@ -31,6 +31,11 @@ public:
   void add(int val);
   void readFromFile(char filename[]);
   void print();
+  Node* searchNode(int val);
+  bool search(int val);
+  Node* minimum(Node* node);
+  void transplant(Node* oldNode, Node* newNode);
+  Color getColor(Node* node);
 };
 
 //main functions will all commmands(add,print,read,quit)
@@ -45,7 +50,9 @@ int main() {
     cout << "1. Add number" << endl;
     cout << "2. Read from file" << endl;
     cout << "3. Print tree" << endl;
-    cout << "4. Exit " << endl;
+    cout << "4. Search" << endl;
+    cout << "5. Delete" << endl;
+    cout << "6. Exit " << endl;
     cout << "Choice:";
     cin >> choice;
     if (choice == 1) {
@@ -62,6 +69,11 @@ int main() {
       tree.print();
     }
     else if (choice == 4) {
+      cout << "What value do you want to search: ";
+      cin >> value;
+      tree.search(value);
+    }
+    else if (choice == 6) {
       running = false;
     }
     else {
@@ -251,3 +263,66 @@ void RBTree::print() {
   }
   printHelper(root, 0); 
 }
+//using Color enum to get color of certain nodes
+Color RBTree::getColor(Node* node) {
+  if (node == NULL) {
+    return BLACK;
+  }
+  return node->color;
+}
+//searchnode helper to ease code in search, lowk could combine but it's feel more simpler doing like this
+Node* RBTree::searchNode(int val) {
+  Node* current = root;
+  while (current != NULL) {
+    if (val == current->data) {
+      return current;
+    }
+    else if (val < current->data) {
+      current = current->left;
+    }
+    else {
+      current = current->right;
+    }
+  }
+  return NULL;
+}
+//search function
+bool RBTree::search(int val) {
+  Node* found = searchNode(val);
+  if (found == NULL) {
+    return false;
+  }
+  return true;
+}
+//find minimum node
+Node* RBTree::minimum(Node* node) {
+  while (node->left != NULL) {
+    node = node->left;
+  }
+  return node;
+}
+//changing and replace old node with new node with certain condtions
+void RBTree::transplant(Node* oldNode, Node* newNode) {
+  if (oldNode->parent == NULL) {
+    root = newNode;
+  }
+  else if (oldNode == oldNode->parent->left) {
+    oldNode->parent->left = newNode;
+  }
+  else {
+    oldNode->parent->right = newNode;
+  }
+  if (newNode != NULL) {
+    newNode->parent = oldNode->parent;
+  }
+}
+
+/*
+I will use this as a guide for deletion cases when doing this:
+Case 1: N is a new root
+Case 2: Sibling is red -> rotate through parents, switch P and S colors, call case 3
+Case 3: Sibling is black -> color S red, recursively call case 1 on P, otherwise we proceed to case 4
+Case 4: P is red, and S and S's children is black -> color P black & S red, otherwise proceed to case 5
+Case 5: S and S's left are black, S's right is red, and node is right, also S and S's right are black, S's left is red, and node is left -> rotate through S, change S to red and child to black, otherwise proceed to case 6
+Case 6: S is black, S's left is red, and node is right OR S is black, S's right is red, and node is left
+*/
