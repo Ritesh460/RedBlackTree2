@@ -317,6 +317,59 @@ void RBTree::transplant(Node* oldNode, Node* newNode) {
   }
 }
 
+void RBTree::remove(int val) {
+  Node* z = searchNode(val);
+  if (z == NULL) {
+    cout << "Number not found.\n";
+    return;
+  }
+
+  Node* y = z;
+  Node* x = NULL;
+  Node* xParent = NULL;
+  Color originalColor = y->color;
+  if (z->left == NULL) {
+    x = z->right;
+    xParent = z->parent;
+    transplant(z, z->right);
+  }
+  else if (z->right == NULL) {
+    x = z->left;
+    xParent = z->parent;
+    transplant(z, z->left);
+  }
+  else {
+    y = minimum(z->right);
+    originalColor = y->color;
+    x = y->right;
+    if (y->parent == z) {
+      xParent = y;
+      if (x != NULL) {
+        x->parent = y;
+      }
+    }
+    else {
+      xParent = y->parent;
+      transplant(y, y->right);
+      y->right = z->right;
+      y->right->parent = y;
+    }
+
+    transplant(z, y);
+    y->left = z->left;
+    y->left->parent = y;
+    y->color = z->color;
+  }
+  delete z;
+
+  if (originalColor == BLACK) {
+    fixDelete(x, xParent); //modify this once I got my fixing deletion
+  }
+
+  if (root != NULL) {
+    root->color = BLACK;
+  }
+}
 /*
 I will use this as a guide for deletion cases when doing this:
 Case 1: N is a new root
