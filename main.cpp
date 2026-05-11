@@ -26,6 +26,7 @@ private:
   void rotateRight(Node* x);
   void fixInsert(Node* node);
   void printHelper(Node* node, int space);
+  void fixDelete(Node* node, Node* parent);
 public:
   RBTree();
   void add(int val);
@@ -36,6 +37,7 @@ public:
   Node* minimum(Node* node);
   void transplant(Node* oldNode, Node* newNode);
   Color getColor(Node* node);
+  void remove(int val);
 };
 
 //main functions will all commmands(add,print,read,quit)
@@ -72,6 +74,11 @@ int main() {
       cout << "What value do you want to search: ";
       cin >> value;
       tree.search(value);
+    }
+    else if (choice == 5) {
+     cout << "What value do you want to delete: ";
+     cin >> value;
+     tree.remove(value);
     }
     else if (choice == 6) {
       running = false;
@@ -316,7 +323,7 @@ void RBTree::transplant(Node* oldNode, Node* newNode) {
     newNode->parent = oldNode->parent;
   }
 }
-
+//remove node used for fixing insertion
 void RBTree::remove(int val) {
   Node* z = searchNode(val);
   if (z == NULL) {
@@ -363,11 +370,103 @@ void RBTree::remove(int val) {
   delete z;
 
   if (originalColor == BLACK) {
-    fixDelete(x, xParent); //modify this once I got my fixing deletion
+    fixDelete(x, xParent); 
   }
 
   if (root != NULL) {
     root->color = BLACK;
+  }
+}
+//main function used for all cases for fixing insertion after deletion
+void RBTree::fixDelete(Node* node, Node* parent) {
+  while (node != root && getColor(node) == BLACK) {
+    if (parent == NULL) {
+      break;
+    }
+
+    if (node == parent->left) {
+      Node* sibling = parent->right;
+      if (getColor(sibling) == RED) {
+        sibling->color = BLACK;
+        parent->color = RED;
+        rotateLeft(parent);
+        sibling = parent->right;
+      }
+      if (getColor(sibling == NULL ? NULL : sibling->left) == BLACK && getColor(sibling == NULL ? NULL : sibling->right) == BLACK) {
+        if (sibling != NULL) {
+          sibling->color = RED;
+        }
+        node = parent;
+        parent = node->parent;
+      }
+      else {
+        if (getColor(sibling == NULL ? NULL : sibling->right) == BLACK) {
+          if (sibling != NULL && sibling->left != NULL) {
+            sibling->left->color = BLACK;
+          }
+          if (sibling != NULL) {
+            sibling->color = RED;
+            rotateRight(sibling);
+          }
+          sibling = parent->right;
+        }
+
+        if (sibling != NULL) {
+          sibling->color = parent->color;
+        }
+        parent->color = BLACK;
+        if (sibling != NULL && sibling->right != NULL) {
+          sibling->right->color = BLACK;
+        }
+        rotateLeft(parent);
+        node = root;
+      }
+    }
+    
+    else {
+      Node* sibling = parent->left;
+      if (getColor(sibling) == RED) {
+        sibling->color = BLACK;
+        parent->color = RED;
+        rotateRight(parent);
+        sibling = parent->left;
+      }
+      if (getColor(sibling == NULL ? NULL : sibling->right) == BLACK && getColor(sibling == NULL ? NULL : sibling->left) == BLACK) {
+        if (sibling != NULL) {
+          sibling->color = RED;
+        }
+        node = parent;
+        parent = node->parent;
+      }
+      else {
+        if (getColor(sibling == NULL ? NULL : sibling->left) == BLACK) {
+          if (sibling != NULL && sibling->right != NULL) {
+            sibling->right->color = BLACK;
+          }          
+          if (sibling != NULL) {
+            sibling->color = RED;
+            rotateLeft(sibling);
+          }
+          sibling = parent->left;
+        }
+
+        if (sibling != NULL) {
+          sibling->color = parent->color;
+        }
+        parent->color = BLACK;
+
+        if (sibling != NULL && sibling->left != NULL) {
+          sibling->left->color = BLACK;
+        }
+
+        rotateRight(parent);
+        node = root;
+      }
+    }
+  }
+
+  if (node != NULL) {
+    node->color = BLACK;
   }
 }
 /*
@@ -377,5 +476,5 @@ Case 2: Sibling is red -> rotate through parents, switch P and S colors, call ca
 Case 3: Sibling is black -> color S red, recursively call case 1 on P, otherwise we proceed to case 4
 Case 4: P is red, and S and S's children is black -> color P black & S red, otherwise proceed to case 5
 Case 5: S and S's left are black, S's right is red, and node is right, also S and S's right are black, S's left is red, and node is left -> rotate through S, change S to red and child to black, otherwise proceed to case 6
-Case 6: S is black, S's left is red, and node is right OR S is black, S's right is red, and node is left
+Case 6: S is black, S's left is red, and node is right OR S is black, S's right is red, and node is left //checking cases: currently around 4 work, and Case 5 and Case 6 are glitchy
 */
