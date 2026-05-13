@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstring>
 using namespace std;
-
+//btw I used some question marks in my code, I was seeing if I could conserve lines and I learned that question mark can be useful for condensing if else statements
 enum Color { //wanted to use enum because set values and organized
   RED, 
   BLACK 
@@ -71,9 +71,14 @@ int main() {
       tree.print();
     }
     else if (choice == 4) {
-      cout << "What value do you want to search: ";
-      cin >> value;
-      tree.search(value);
+       cout << "Enter number to search: ";
+       cin >> value;
+       if (tree.search(value)) {
+         cout << value << " is in the tree.\n";
+       }
+       else {
+         cout << value << " is not in the tree.\n";
+       }
     }
     else if (choice == 5) {
      cout << "What value do you want to delete: ";
@@ -277,7 +282,7 @@ Color RBTree::getColor(Node* node) {
   }
   return node->color;
 }
-//searchnode helper to ease code in search, lowk could combine but it's feel more simpler doing like this
+//searchnode helper to ease code in search, lowk could combine but it's feel more simpler doing like this, also used to search for a specific value
 Node* RBTree::searchNode(int val) {
   Node* current = root;
   while (current != NULL) {
@@ -293,7 +298,7 @@ Node* RBTree::searchNode(int val) {
   }
   return NULL;
 }
-//search function
+//main search function, also returns true if value exists in tree
 bool RBTree::search(int val) {
   Node* found = searchNode(val);
   if (found == NULL) {
@@ -301,14 +306,14 @@ bool RBTree::search(int val) {
   }
   return true;
 }
-//find minimum node
+//find minimum node, primarily used for finding successor during deletion
 Node* RBTree::minimum(Node* node) {
   while (node->left != NULL) {
     node = node->left;
   }
   return node;
 }
-//changing and replace old node with new node with certain condtions
+//changing and replace parts of the big tree with other parts, done during deletion for reconfiguring
 void RBTree::transplant(Node* oldNode, Node* newNode) {
   if (oldNode->parent == NULL) {
     root = newNode;
@@ -323,8 +328,9 @@ void RBTree::transplant(Node* oldNode, Node* newNode) {
     newNode->parent = oldNode->parent;
   }
 }
-//remove node used for fixing insertion
+//remove node from RB tree
 void RBTree::remove(int val) {
+  //find node to delete
   Node* z = searchNode(val);
   if (z == NULL) {
     cout << "Number not found.\n";
@@ -335,16 +341,19 @@ void RBTree::remove(int val) {
   Node* x = NULL;
   Node* xParent = NULL;
   Color originalColor = y->color;
+  //case 1
   if (z->left == NULL) {
     x = z->right;
     xParent = z->parent;
     transplant(z, z->right);
   }
+  //case 2
   else if (z->right == NULL) {
     x = z->left;
     xParent = z->parent;
     transplant(z, z->left);
   }
+  //case 3
   else {
     y = minimum(z->right);
     originalColor = y->color;
@@ -377,7 +386,7 @@ void RBTree::remove(int val) {
     root->color = BLACK;
   }
 }
-//main function used for all cases for fixing insertion after deletion
+//main function used for all cases for fixing insertion after deletion (this was the hardest and most tedious function I ever did)
 void RBTree::fixDelete(Node* node, Node* parent) {
   while (node != root && getColor(node) == BLACK) {
     if (parent == NULL) {
@@ -386,12 +395,14 @@ void RBTree::fixDelete(Node* node, Node* parent) {
 
     if (node == parent->left) {
       Node* sibling = parent->right;
+      //chunks of case 2 where sibling is red
       if (getColor(sibling) == RED) {
         sibling->color = BLACK;
         parent->color = RED;
         rotateLeft(parent);
         sibling = parent->right;
       }
+      //case 3 and 4
       if (getColor(sibling == NULL ? NULL : sibling->left) == BLACK && getColor(sibling == NULL ? NULL : sibling->right) == BLACK) {
         if (sibling != NULL) {
           sibling->color = RED;
@@ -400,6 +411,7 @@ void RBTree::fixDelete(Node* node, Node* parent) {
         parent = node->parent;
       }
       else {
+	//case 5
         if (getColor(sibling == NULL ? NULL : sibling->right) == BLACK) {
           if (sibling != NULL && sibling->left != NULL) {
             sibling->left->color = BLACK;
@@ -410,7 +422,7 @@ void RBTree::fixDelete(Node* node, Node* parent) {
           }
           sibling = parent->right;
         }
-
+        //case 6 with outer child being red
         if (sibling != NULL) {
           sibling->color = parent->color;
         }
@@ -422,15 +434,17 @@ void RBTree::fixDelete(Node* node, Node* parent) {
         node = root;
       }
     }
-    
+    //i realize that I need more versions for the cases when node was right child so more in here
     else {
       Node* sibling = parent->left;
+      //case 2
       if (getColor(sibling) == RED) {
         sibling->color = BLACK;
         parent->color = RED;
         rotateRight(parent);
         sibling = parent->left;
       }
+      //case 3 and 4
       if (getColor(sibling == NULL ? NULL : sibling->right) == BLACK && getColor(sibling == NULL ? NULL : sibling->left) == BLACK) {
         if (sibling != NULL) {
           sibling->color = RED;
@@ -439,6 +453,7 @@ void RBTree::fixDelete(Node* node, Node* parent) {
         parent = node->parent;
       }
       else {
+	//case 5
         if (getColor(sibling == NULL ? NULL : sibling->left) == BLACK) {
           if (sibling != NULL && sibling->right != NULL) {
             sibling->right->color = BLACK;
@@ -449,7 +464,7 @@ void RBTree::fixDelete(Node* node, Node* parent) {
           }
           sibling = parent->left;
         }
-
+        //case 6
         if (sibling != NULL) {
           sibling->color = parent->color;
         }
@@ -476,5 +491,5 @@ Case 2: Sibling is red -> rotate through parents, switch P and S colors, call ca
 Case 3: Sibling is black -> color S red, recursively call case 1 on P, otherwise we proceed to case 4
 Case 4: P is red, and S and S's children is black -> color P black & S red, otherwise proceed to case 5
 Case 5: S and S's left are black, S's right is red, and node is right, also S and S's right are black, S's left is red, and node is left -> rotate through S, change S to red and child to black, otherwise proceed to case 6
-Case 6: S is black, S's left is red, and node is right OR S is black, S's right is red, and node is left //checking cases: currently around 4 work, and Case 5 and Case 6 are glitchy
+Case 6: S is black, S's left is red, and node is right OR S is black, S's right is red, and node is left //checking cases: currently around 5 work, and Case 6 is a bit glitchy
 */
